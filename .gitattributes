@@ -1,0 +1,2 @@
+* !text !filter !merge !diff
+upc_a_products_2025_06.csv filter=lfs diff=lfs merge=lfs -text
