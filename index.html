@@ -43,6 +43,7 @@
     let data = [];
 
     function renderRows(filtered) {
+      if(!filtered){return;}
       const tbody = document.getElementById('results');
       const message = document.getElementById('message');
       tbody.innerHTML = '';
@@ -60,7 +61,7 @@
 
     function filterData(query) {
       const q = query.toLowerCase();
-
+      console.log("Query: ",q)
       for (let i = 0; i < 10; i++) {
         Papa.parse(`entries/${i}/${i}.csv`, {
           download: true,
@@ -73,10 +74,10 @@
           },
           complete: function(results, file) {
             renderRows(data);
-            console.log("Parsing complete:", results, file);
           }
         });
       }
+      console.log("Parsing complete");
     }
 
     const input = document.getElementById('search');
