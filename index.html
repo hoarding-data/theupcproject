@@ -38,6 +38,11 @@
         timeoutId = setTimeout(() => fn.apply(this, args), delay);
       };
     }
+
+    function updateMessage(messageText) {
+      const messageElement = document.getElementById('message');
+      messageElement.textContent = messageText;
+    }
   
     async function parseCSV(i, query) {
       const q = query.toLowerCase();
@@ -71,23 +76,23 @@
     }
   
     async function filterData(query) {
+      updateMessage("Searching...")
       const parseTasks = [];
       for (let i = 0; i < 10; i++) {
         parseTasks.push(parseCSV(i, query));
       }
       const resultsArray = await Promise.all(parseTasks);
+      updateMessage("")
       return resultsArray.flat();
     }
   
     function renderRows(filtered) {
       if (!filtered) return;
       const tbody = document.getElementById('results');
-      const message = document.getElementById('message');
       tbody.innerHTML = '';
       if (filtered.length === 0) {
-        message.textContent = "No results found.";
+        updateMessage("No results found.");
       } else {
-        message.textContent = "";
         filtered.forEach(row => {
           const tr = document.createElement('tr');
           tr.innerHTML = `<td>${row.upc_a_code}</td><td>${row.item_name}</td>`;
@@ -102,7 +107,7 @@
       const query = e.target.value.trim();
       if (query.length < 3) {
         document.getElementById('results').innerHTML = '';
-        document.getElementById('message').textContent = 'Please enter a string greater than 3 characters to search';
+        updateMessage('Please enter a string greater than 3 characters to search');
       } else {
         const results = await filterData(query);
         renderRows(results);
