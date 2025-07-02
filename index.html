@@ -52,14 +52,21 @@
       renderRows(results);
     });
 
-    Papa.parse('upc_a_products_2025_07.csv', {
-      download: true,
-      header: true,
-      complete: function(results) {
-        data = results.data.filter(r => r.upc_a_code && r.item_name);
-        renderRows(data);
-      }
-    });
+    for(var i = 0; i<10; i++){
+      Papa.parse(`entries/${i}/${i}.csv`, {
+        download: true,
+        header: true,
+        //worker: true,
+        step: function(results) {
+          if(results.data.upc_a_code && results.data.item_name)
+          data.push(results.data);
+        },
+        complete: function(results, file) {
+          renderRows(data);
+          console.log("Parsing complete:", results, file);
+        }
+      });
+    }
   </script>
 </body>
 </html>
