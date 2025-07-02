@@ -14,7 +14,9 @@
 </head>
 <body>
   <h1>Search UPC Database</h1>
+  <b>This will be slow because it needs to search clientside text every time.</b>
   <input type="text" id="search" placeholder="Search by title or UPC..." />
+  <p id="message" style="color: gray; margin-top: 1rem;">Please enter a string greater than 3 characters to search</p>
   <table>
     <thead>
       <tr>
@@ -26,47 +28,70 @@
   </table>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- I hate this script, you hate this script, we ALL hate this script.-->
   <script>
+
+    function debounce(fn, delay) {
+      let timeoutId;
+      return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
     let data = [];
 
     function renderRows(filtered) {
       const tbody = document.getElementById('results');
+      const message = document.getElementById('message');
       tbody.innerHTML = '';
-      filtered.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.upc_a_code}</td><td>${row.item_name}</td>`;
-        tbody.appendChild(tr);
-      });
+      if (filtered.length === 0) {
+        message.textContent = "No results found.";
+      } else {
+        message.textContent = "";
+        filtered.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.upc_a_code}</td><td>${row.item_name}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
     }
 
     function filterData(query) {
       const q = query.toLowerCase();
-      return data.filter(row =>
-        row.item_name.toLowerCase().includes(q) ||
-        row.upc_a_code.includes(q)
-      );
+
+      for (let i = 0; i < 10; i++) {
+        Papa.parse(`entries/${i}/${i}.csv`, {
+          download: true,
+          header: true,
+          step: function(results) {
+            if (results.data.upc_a_code && results.data.upc_a_code.toLowerCase().includes(q))
+              data.push(results.data);
+            else if(results.data.item_name && results.data.item_name.toLowerCase().includes(q))
+              data.push(results.data);
+          },
+          complete: function(results, file) {
+            renderRows(data);
+            console.log("Parsing complete:", results, file);
+          }
+        });
+      }
     }
 
-    document.getElementById('search').addEventListener('input', e => {
-      const results = filterData(e.target.value);
-      renderRows(results);
-    });
+    const input = document.getElementById('search');
 
-    for(var i = 0; i<10; i++){
-      Papa.parse(`entries/${i}/${i}.csv`, {
-        download: true,
-        header: true,
-        //worker: true,
-        step: function(results) {
-          if(results.data.upc_a_code && results.data.item_name)
-          data.push(results.data);
-        },
-        complete: function(results, file) {
-          renderRows(data);
-          console.log("Parsing complete:", results, file);
-        }
-      });
-    }
+    input.addEventListener('input', debounce(function (e) {
+      const query = e.target.value.trim();
+      if (query.length < 3) {
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('message').textContent = 'Please enter a string greater than 3 characters to search';
+      } else {
+        data = []
+        const results = filterData(query);
+        renderRows(results);
+      }
+    }, 500));
+
   </script>
 </body>
-</html>
