@@ -77,12 +77,13 @@
             }
           },
           complete: function(results, file) {
+            console.log(`entries/${i}/${i}.csv`)
+            console.log(results)
             results.errors.forEach((item)=>{console.error(item)})
-            renderRows(data);
           }
         });
       }
-      console.log("Parsing complete");
+      renderRows(data);
     }
 
     const input = document.getElementById('search');
