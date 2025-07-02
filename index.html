@@ -67,12 +67,17 @@
           download: true,
           header: true,
           step: function(results) {
+            try{
             if (results.data.upc_a_code && results.data.upc_a_code.toLowerCase().includes(q))
               data.push(results.data);
             else if(results.data.item_name && results.data.item_name.toLowerCase().includes(q))
               data.push(results.data);
+            }catch(e){
+              console.log(e)
+            }
           },
           complete: function(results, file) {
+            results.errors.forEach((item)=>{console.error(item)})
             renderRows(data);
           }
         });
