@@ -31,7 +31,6 @@
 
   <!-- I hate this script, you hate this script, we ALL hate this script.-->
   <script>
-
     function debounce(fn, delay) {
       let timeoutId;
       return function (...args) {
@@ -39,11 +38,49 @@
         timeoutId = setTimeout(() => fn.apply(this, args), delay);
       };
     }
-
-    let data = [];
-
+  
+    async function parseCSV(i, query) {
+      const q = query.toLowerCase();
+      const filePath = `entries/${i}/${i}.csv`;
+  
+      return new Promise((resolve) => {
+        const matches = [];
+        Papa.parse(filePath, {
+          download: true,
+          header: true,
+          step: function(results) {
+            try {
+              const row = results.data;
+              if (row.upc_a_code && row.upc_a_code.toLowerCase().includes(q)) {
+                matches.push(row);
+              } else if (row.item_name && row.item_name.toLowerCase().includes(q)) {
+                matches.push(row);
+              }
+            } catch (e) {
+              console.error(`Error parsing row in ${filePath}:`, e);
+            }
+          },
+          complete: function(results, file) {
+            if (results.errors.length > 0) {
+              console.warn(`Errors in ${filePath}:`, results.errors);
+            }
+            resolve(matches);
+          }
+        });
+      });
+    }
+  
+    async function filterData(query) {
+      const parseTasks = [];
+      for (let i = 0; i < 10; i++) {
+        parseTasks.push(parseCSV(i, query));
+      }
+      const resultsArray = await Promise.all(parseTasks);
+      return resultsArray.flat();
+    }
+  
     function renderRows(filtered) {
-      if(!filtered){return;}
+      if (!filtered) return;
       const tbody = document.getElementById('results');
       const message = document.getElementById('message');
       tbody.innerHTML = '';
@@ -58,47 +95,18 @@
         });
       }
     }
-
-    function filterData(query) {
-      const q = query.toLowerCase();
-      console.log("Query: ",q)
-      for (let i = 0; i < 10; i++) {
-        Papa.parse(`entries/${i}/${i}.csv`, {
-          download: true,
-          header: true,
-          step: function(results) {
-            try{
-            if (results.data.upc_a_code && results.data.upc_a_code.toLowerCase().includes(q))
-              data.push(results.data);
-            else if(results.data.item_name && results.data.item_name.toLowerCase().includes(q))
-              data.push(results.data);
-            }catch(e){
-              console.log(e)
-            }
-          },
-          complete: function(results, file) {
-            console.log(`entries/${i}/${i}.csv`)
-            console.log(results)
-            results.errors.forEach((item)=>{console.error(item)})
-          }
-        });
-      }
-      renderRows(data);
-    }
-
+  
     const input = document.getElementById('search');
-
-    input.addEventListener('input', debounce(function (e) {
+  
+    input.addEventListener('input', debounce(async function (e) {
       const query = e.target.value.trim();
       if (query.length < 3) {
         document.getElementById('results').innerHTML = '';
         document.getElementById('message').textContent = 'Please enter a string greater than 3 characters to search';
       } else {
-        data = []
-        const results = filterData(query);
+        const results = await filterData(query);
         renderRows(results);
       }
     }, 500));
-
-  </script>
+  </script>  
 </body>
