@@ -1,3 +1,4 @@
 upc_a_products_2025_06.csv filter=lfs diff=lfs merge=lfs -text
 upc_a_products_2025_07.csv filter=lfs diff=lfs merge=lfs -text
 upc_a_products_2025_08.csv filter=lfs diff=lfs merge=lfs -text
+upc_a_products_2025_09.csv filter=lfs diff=lfs merge=lfs -text
